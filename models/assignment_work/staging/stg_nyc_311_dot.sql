@@ -84,7 +84,7 @@ cleaned AS (
    WHERE (agency = 'DOT' OR agency_name LIKE '%Transportation%')
    AND unique_key IS NOT NULL
    AND created_date IS NOT NULL
-   AND CAST(created_date AS DATETIME) >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 7 YEAR)
+   AND CAST(created_date AS DATETIME) >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 7 YEAR)dbt run --select stg_nyc_311_dot
    AND borough IS NOT NULL
 
    -- Deduplicate
