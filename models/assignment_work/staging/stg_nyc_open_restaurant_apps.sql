@@ -22,7 +22,8 @@ cleaned AS (
             healthcompliance_terms,
             landmark_district_or_building,
             globalid,
-            landmarkdistrict_terms
+            landmarkdistrict_terms,
+            doing_business_as_dba
         ),
 
         -- 1. Rename
@@ -47,12 +48,18 @@ cleaned AS (
             WHEN UPPER(TRIM(healthcompliance_terms)) = 'NO' THEN FALSE
             ELSE NULL 
         END AS healthcompliance_terms,
+        
 
         CASE 
             WHEN UPPER(TRIM(landmark_district_or_building)) = 'YES' THEN TRUE
             WHEN UPPER(TRIM(landmark_district_or_building)) = 'NO' THEN FALSE
             ELSE NULL 
         END AS landmark_district_or_building,
+
+        CASE
+            WHEN doing_business_as_dba LIKE '######%' THEN NULL
+            ELSE doing_business_as_dba
+        END AS doing_business_as_dba,
 
         CASE 
             WHEN UPPER(TRIM(landmarkdistrict_terms)) = 'YES' THEN TRUE
