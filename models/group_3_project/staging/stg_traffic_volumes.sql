@@ -16,7 +16,6 @@ cleaned AS (
         CAST(from_street AS STRING) AS from_street,
         CAST(to_street AS STRING) AS to_street,
         CAST(street_name AS STRING) AS street_name,
-        CAST(borough AS STRING) AS borough,
 
         -- 4. Numeric 
         CAST(traffic_volume AS INT64) AS traffic_volume,
@@ -28,7 +27,17 @@ cleaned AS (
 
         -- 5. Longitude and Latitude Extraction
         SAFE_CAST(SPLIT(TRIM(REPLACE(REPLACE(wkt_geom, 'POINT (', ''), ')', '')), ' ')[OFFSET(0)] AS FLOAT64) AS longitude,
-        SAFE_CAST(SPLIT(TRIM(REPLACE(REPLACE(wkt_geom, 'POINT (', ''), ')', '')), ' ')[OFFSET(1)] AS FLOAT64) AS latitude
+        SAFE_CAST(SPLIT(TRIM(REPLACE(REPLACE(wkt_geom, 'POINT (', ''), ')', '')), ' ')[OFFSET(1)] AS FLOAT64) AS latitude,
+
+        -- 6. Borough
+        CASE
+           WHEN UPPER(TRIM(borough)) IN ('MANHATTAN', 'NEW YORK COUNTY') THEN 'Manhattan'
+           WHEN UPPER(TRIM(borough)) IN ('BRONX', 'THE BRONX') THEN 'Bronx'
+           WHEN UPPER(TRIM(borough)) IN ('BROOKLYN', 'KINGS COUNTY') THEN 'Brooklyn'
+           WHEN UPPER(TRIM(borough)) IN ('QUEENS', 'QUEEN', 'QUEENS COUNTY') THEN 'Queens'
+           WHEN UPPER(TRIM(borough)) IN ('STATEN ISLAND', 'RICHMOND COUNTY') THEN 'Staten Island'
+           ELSE 'UNKNOWN or CITYWIDE'
+        END AS borough,
 
     FROM source
     WHERE request_id IS NOT NULL
