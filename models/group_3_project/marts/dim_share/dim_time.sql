@@ -13,7 +13,7 @@ WITH all_times AS (
 
     UNION DISTINCT
 
-    -- 补齐秒数为 0，确保类型为 TIME
+
     SELECT DISTINCT TIME(hour, minute, 0) AS time_of_day
     FROM {{ ref('stg_traffic_volumns') }}
     WHERE hour IS NOT NULL 
@@ -22,7 +22,7 @@ WITH all_times AS (
 
 time_dimension AS (
     SELECT
-        -- 1. 这里加了一个逗号
+
         {{ dbt_utils.generate_surrogate_key(['time_of_day']) }} AS time_key, 
 
         time_of_day,
