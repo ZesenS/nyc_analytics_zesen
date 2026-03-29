@@ -27,7 +27,10 @@ cleaned AS (
         ),
 
         -- 1. Rename
-        bulding_number AS building_number,
+        CASE
+         WHEN bulding_number = 'undifined' THEN NULL
+         ELSE bulding_number
+        END AS bulding_number,
 
         -- 2. Date
         CAST(time_of_submission AS TIMESTAMP) AS time_of_submission,

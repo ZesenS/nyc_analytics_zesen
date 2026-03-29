@@ -26,7 +26,8 @@ cleaned AS (
            cross_street_2,
            latitude,
            longitude,
-           open_data_channel_type
+           open_data_channel_type,
+           police_precinct
        ),
 
        -- Identifiers
@@ -42,8 +43,10 @@ cleaned AS (
        CAST(complaint_type AS STRING) AS complaint_type,
        CAST(descriptor AS STRING) AS descriptor,
        UPPER(TRIM(CAST(status AS STRING))) AS status,
-
-       -- Location - clean zip code, handling several common zip code data problems
+        CASE
+            WHEN police_precinct IN ('Unspecified', 'unspecified') THEN NULL
+            ELSE police_precinct 
+        END AS police_precinct,
        CASE
            WHEN UPPER(TRIM(CAST(incident_zip AS STRING))) IN ('N/A', 'NA') THEN NULL
            WHEN UPPER(TRIM(CAST(incident_zip AS STRING))) = 'ANONYMOUS' THEN 'Anonymous'

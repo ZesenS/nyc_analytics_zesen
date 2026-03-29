@@ -23,7 +23,8 @@ cleaned AS (
            cross_street_2,
            latitude,
            longitude,
-           open_data_channel_type
+           open_data_channel_type,
+           police_precinct 
        ),
 
        -- Identifiers
@@ -40,6 +41,10 @@ cleaned AS (
        CAST(complaint_type AS STRING) AS complaint_type,
        CAST(descriptor AS STRING) AS descriptor,
        UPPER(TRIM(CAST(status AS STRING))) AS status,
+               CASE
+            WHEN police_precinct IN ('Unspecified', 'unspecified') THEN NULL
+            ELSE police_precinct 
+        END AS police_precinct,
 
        -- Location - clean zip code, handling several common zip code data problems
        CASE
@@ -60,7 +65,6 @@ cleaned AS (
            WHEN UPPER(TRIM(borough)) IN ('BROOKLYN', 'KINGS COUNTY') THEN 'Brooklyn'
            WHEN UPPER(TRIM(borough)) IN ('QUEENS', 'QUEEN', 'QUEENS COUNTY') THEN 'Queens'
            WHEN UPPER(TRIM(borough)) IN ('STATEN ISLAND', 'RICHMOND COUNTY') THEN 'Staten Island'
-           ELSE 'UNKNOWN or CITYWIDE'
        END AS borough,
 
        CAST(incident_address AS STRING) AS incident_address,
@@ -84,6 +88,13 @@ cleaned AS (
    AND created_date IS NOT NULL
    AND CAST(created_date AS DATETIME) >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 7 YEAR)
    AND borough IS NOT NULL
+   AND UPPER(TRIM(borough)) IN (
+    'MANHATTAN', 'NEW YORK COUNTY', 
+    'BRONX', 'THE BRONX', 
+    'BROOKLYN', 'KINGS COUNTY', 
+    'QUEENS', 'QUEEN', 'QUEENS COUNTY', 
+    'STATEN ISLAND', 'RICHMOND COUNTY'
+)
 
    -- Deduplicate
    QUALIFY ROW_NUMBER() OVER (PARTITION BY unique_key ORDER BY created_date DESC) = 1
