@@ -1,39 +1,95 @@
--- Date dimension shared by both restaurant applications and 311 requests
+WITH source AS (
+    SELECT * FROM {{ source('raw', 'source_nyc_open_restaurant_apps') }}
+), 
 
-WITH all_dates AS (
-   -- Get dates (dates, no time included) from 311 requests
-   SELECT DISTINCT CAST(created_date AS DATE) AS full_date
-   FROM {{ ref('stg_nyc_311_dot') }}
-   WHERE created_date IS NOT NULL
+cleaned AS (
+    SELECT
+        * EXCEPT (
+            bin,
+            bulding_number,
+            council_district,
+            census_tract,
+            community_board,
+            longitude,
+            latitude,
+            qualify_alcohol,
+            roadway_dimensions_length,
+            roadway_dimensions_width,
+            sidewalk_dimensions_area,
+            sidewalk_dimensions_length,
+            sidewalk_dimensions_width,
+            time_of_submission,
+            healthcompliance_terms,
+            landmark_district_or_building,
+            globalid,
+            landmarkdistrict_terms,
+            doing_business_as_dba
+        ),
 
-   UNION DISTINCT
+        -- 1. Rename
+        CASE
+         WHEN bulding_number = 'undifined' THEN NULL
+         ELSE bulding_number
+        END AS bulding_number,
 
-   -- Get dates from restaurant applications
-   SELECT DISTINCT CAST(time_of_submission AS DATE) AS full_date
-   FROM {{ ref('stg_nyc_open_restaurant_apps') }}
-   WHERE time_of_submission IS NOT NULL
-),
+        -- 2. Date
+        CAST(time_of_submission AS TIMESTAMP) AS time_of_submission,
 
-date_dimension AS (
-   SELECT
-       {{ dbt_utils.generate_surrogate_key(['full_date']) }} AS date_key,
+        -- 3. Decimal
+        CAST(latitude AS DECIMAL) AS latitude,
+        CAST(longitude AS DECIMAL) AS longitude,
 
-       full_date,
-       EXTRACT(YEAR FROM full_date) AS year,
-       EXTRACT(QUARTER FROM full_date) AS quarter,
-       EXTRACT(MONTH FROM full_date) AS month,
-       FORMAT_DATE('%B', full_date) AS month_name,
-       EXTRACT(DAY FROM full_date) AS day_of_month,
-       EXTRACT(DAYOFWEEK FROM full_date) AS day_of_week,
-       FORMAT_DATE('%A', full_date) AS day_name,
-       EXTRACT(DAYOFWEEK FROM full_date) IN (1, 7) AS is_weekend,
+        -- 4. Bool
+        CASE 
+            WHEN UPPER(TRIM(qualify_alcohol)) = 'YES' THEN TRUE
+            WHEN UPPER(TRIM(qualify_alcohol)) = 'NO' THEN FALSE
+            ELSE NULL 
+        END AS has_alcohol,
 
-       CASE
-           WHEN EXTRACT(MONTH FROM full_date) >= 7 THEN EXTRACT(YEAR FROM full_date) + 1
-           ELSE EXTRACT(YEAR FROM full_date)
-       END AS fiscal_year
+        CASE 
+            WHEN UPPER(TRIM(healthcompliance_terms)) = 'YES' THEN TRUE
+            WHEN UPPER(TRIM(healthcompliance_terms)) = 'NO' THEN FALSE
+            ELSE NULL 
+        END AS healthcompliance_terms,
+        
 
-   FROM all_dates
+        CASE 
+            WHEN UPPER(TRIM(landmark_district_or_building)) = 'YES' THEN TRUE
+            WHEN UPPER(TRIM(landmark_district_or_building)) = 'NO' THEN FALSE
+            ELSE NULL 
+        END AS landmark_district_or_building,
+
+        CASE
+            WHEN doing_business_as_dba LIKE '######%' THEN NULL
+            ELSE doing_business_as_dba
+        END AS doing_business_as_dba,
+
+        CASE 
+            WHEN UPPER(TRIM(landmarkdistrict_terms)) = 'YES' THEN TRUE
+            WHEN UPPER(TRIM(landmarkdistrict_terms)) = 'NO' THEN FALSE
+            ELSE NULL 
+        END AS landmarkdistrict_terms,
+
+        -- 5. Replace {} in globalid
+        REPLACE(REPLACE(globalid, '{', ''), '}', '') AS globalid,
+
+        -- 6. Integer
+        CAST(bin AS INTEGER) AS bin,
+        CAST(census_tract AS INTEGER) AS census_tract,
+        CAST(community_board AS INTEGER) AS community_board,
+        CAST(council_district AS INTEGER) AS council_district,
+        CAST(roadway_dimensions_length AS INTEGER) AS roadway_dimensions_length,
+        CAST(roadway_dimensions_width AS INTEGER) AS roadway_dimensions_width,
+        CAST(sidewalk_dimensions_area AS INTEGER) AS sidewalk_dimensions_area,
+        CAST(sidewalk_dimensions_length AS INTEGER) AS sidewalk_dimensions_length,
+        CAST(sidewalk_dimensions_width AS INTEGER) AS sidewalk_dimensions_width
+    -- 7. Filter
+    FROM source
+    WHERE objectid IS NOT NULL
+
+   -- 7. Duplicate
+   QUALIFY ROW_NUMBER() OVER (PARTITION BY objectid ORDER BY time_of_submission DESC) = 1
 )
 
-SELECT * FROM date_dimension
+
+SELECT * FROM cleaned
