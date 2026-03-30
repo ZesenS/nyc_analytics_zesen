@@ -1,6 +1,25 @@
 {{ config(schema='group_3_marts') }}
 
-WITH stg_311 AS (
+WITH dim_date AS (
+    SELECT date_key FROM {{ ref('dim_date') }}
+),
+dim_time AS (
+    SELECT time_key FROM {{ ref('dim_time') }}
+),
+dim_location AS (
+    SELECT location_key FROM {{ ref('dim_location') }}
+),
+dim_agency AS (
+    SELECT agency_key FROM {{ ref('dim_agency') }}
+),
+dim_problem AS (
+    SELECT problem_key FROM {{ ref('dim_problem') }}
+),
+dim_incident_location AS (
+    SELECT incident_location_key FROM {{ ref('dim_incident_location') }}
+),
+
+stg_311 AS (
     SELECT * FROM {{ ref('stg_311_requests') }}
 )
 
