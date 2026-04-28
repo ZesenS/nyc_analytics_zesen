@@ -1,6 +1,5 @@
 {{ config(schema='group_3_marts') }}
 
-
 WITH dim_date AS (
     SELECT date_key FROM {{ ref('dim_date') }}
 ),
@@ -15,7 +14,7 @@ dim_street_segment AS (
 ),
 
 traffic_staging AS (
-    SELECT * FROM {{ ref('stg_traffic_volumns') }}
+    SELECT * FROM {{ ref('stg_traffic_volumes') }} -- 
 )
 
 SELECT

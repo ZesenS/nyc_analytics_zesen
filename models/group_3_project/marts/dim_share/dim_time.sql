@@ -15,7 +15,7 @@ WITH all_times AS (
 
 
     SELECT DISTINCT TIME(hour, minute, 0) AS time_of_day
-    FROM {{ ref('stg_traffic_volumns') }}
+    FROM {{ ref('stg_traffic_volumes') }}
     WHERE hour IS NOT NULL 
     AND minute IS NOT NULL
 ),

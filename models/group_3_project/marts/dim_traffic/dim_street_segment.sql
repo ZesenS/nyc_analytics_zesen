@@ -9,7 +9,7 @@ WITH street_segment_dimension AS (
         to_street,
         direction
         
-    FROM {{ ref('stg_traffic_volumns') }}
+    FROM {{ ref('stg_traffic_volumes') }}
     WHERE street_name IS NOT NULL 
        OR from_street IS NOT NULL
 )
