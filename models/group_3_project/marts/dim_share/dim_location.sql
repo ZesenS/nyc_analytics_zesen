@@ -6,7 +6,7 @@ WITH all_boro AS (
     UNION DISTINCT
 
     SELECT DISTINCT borough
-    FROM {{ ref('stg_traffic_volumns') }} 
+    FROM {{ ref('stg_traffic_volumes') }} 
     WHERE borough IS NOT NULL 
 ),
 

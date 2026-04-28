@@ -1,5 +1,5 @@
 WITH source AS (
-    SELECT * FROM {{ source('traffic_raw_source', 'group_3_source_dot_service_requests_history') }}
+    SELECT * FROM {{ source('traffic_raw_source', 'group_3_source_dot_311_requests_history') }}
 ),
 
 cleaned AS (

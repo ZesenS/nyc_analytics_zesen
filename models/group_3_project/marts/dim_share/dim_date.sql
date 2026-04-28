@@ -10,7 +10,7 @@ WITH all_date AS (
 
     UNION DISTINCT
     SELECT DISTINCT DATE(year, month, day) AS full_date
-    FROM {{ ref('stg_traffic_volumns') }}
+    FROM {{ ref('stg_traffic_volumes') }}
     WHERE year IS NOT NULL 
       AND month IS NOT NULL 
       AND day IS NOT NULL
